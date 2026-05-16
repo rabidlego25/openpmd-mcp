@@ -38,3 +38,4 @@ mcp_config.json
 *.h5
 *.bp
 *.json5
+.venv/

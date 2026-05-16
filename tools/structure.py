@@ -3,10 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import openpmd_api as io
-
 # ── Helpers ──────────────────────────────────────────────────────────────────
-def safe_component_info(company: Any) -> dict:
+def _component_info(component: Any) -> dict:
     """Extract serializable metadata from an OpenPMD mesh / particle componenet"""
     return {
         'shape': list(getattr(component, 'shape', [])),
@@ -57,28 +55,31 @@ def register_structure_tools(mcp) -> None:
             Dict with keys: path, available_iterations, selected_iteration,
             meshes, particles.
         """
+        import openpmd_api as io
         path = _resolve_path(series_path)
 
-        # ✅ Context manager ensures the Series is closed even on error
-        with io.Series(path, io.Access.read_only) as series:
-            iteration_keys = list(series.iterations)
+        # Context manager ensures the Series is closed even on error
 
-            if not iteration_keys:
-                raise ValueError(f"No iterations found in series: {path}")
+        series = io.Series(path, io.Access.read_only)
+        iteration_keys = list(series.iterations)
 
-            if iteration is not None and iteration not in iteration_keys:
-                raise ValueError(
-                    f"Iteration {iteration} not in series. "
-                    f"Available: {iteration_keys}"
-                )
+        if not iteration_keys:
+            raise ValueError(f"No iterations found in series: {path}")
 
-            selected = iteration if iteration is not None else iteration_keys[0]
-            it = series.iterations[selected]
+        if iteration is not None and iteration not in iteration_keys:
+            raise ValueError(
+                f"Iteration {iteration} not in series. "
+                f"Available: {iteration_keys}"
+            )
 
-            return {
-                "path": path,
-                "available_iterations": iteration_keys,
-                "selected_iteration": selected,
-                "meshes": _read_meshes(it),
-                "particles": _read_particles(it),
-            }
+        selected = iteration if iteration is not None else iteration_keys[0]
+        it = series.iterations[selected]
+
+        del series
+        return {
+            "path": path,
+            "available_iterations": iteration_keys,
+            "selected_iteration": selected,
+            "meshes": _read_meshes(it),
+            "particles": _read_particles(it),
+        }
