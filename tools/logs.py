@@ -21,7 +21,7 @@ def register_log_tools(mcp) -> None:
             run_path: Path to PIConGPU directory
             tail_lines: Number of lines to return from logs. Default 50.
         """
-        base = PAth(run_path).expanduser().resolve()
+        base = Path(run_path).expanduser().resolve()
         if not base.exists():
             raise ValueError(f"Path does not exist: {base}")
 
